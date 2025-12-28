@@ -34,7 +34,8 @@ def load_data():
     ]
 
     credentials = dict(st.secrets["gcp_service_account"])
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials, scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials, scopes=scope)
+
     
     client = gspread.authorize(creds)
     sheet = client.open("Data Konten Awal").worksheet("Sheet1")
