@@ -5,6 +5,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from prophet import Prophet
+from google.oauth2.service_account import Credentials
 
 
 st.set_page_config(
