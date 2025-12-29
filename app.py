@@ -31,9 +31,8 @@ def load_data():
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
     ]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(
-        "credentials.json", scope
-    )
+    secret_info = st.secrets["gcp_service_account"]
+    creds = Credentials.from_service_account_info(secret_info, scopes=scope)
     client = gspread.authorize(creds)
     sheet = client.open("Data Konten Awal").worksheet("Sheet1")
     data = sheet.get_all_values()
