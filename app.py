@@ -1,5 +1,4 @@
 import streamlit as st
-import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
@@ -32,11 +31,9 @@ def load_data():
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
     ]
-
-    credentials = dict(st.secrets["gcp_service_account"])
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials, scopes=scope)
-
-    
+    creds = ServiceAccountCredentials.from_json_keyfile_name(
+        "credentials.json", scope
+    )
     client = gspread.authorize(creds)
     sheet = client.open("Data Konten Awal").worksheet("Sheet1")
     data = sheet.get_all_values()
