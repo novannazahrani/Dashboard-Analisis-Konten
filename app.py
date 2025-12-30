@@ -377,22 +377,29 @@ with tab3:
         fig.update_layout(template=TEMPLATE)
         st.plotly_chart(fig, use_container_width=True, key="forecast")
         
-        forecast_future = forecast[forecast["ds"] > df_monthly["ds"].max()]
-        if len(forecast_future) > 0:
-
+        forecast_future = forecast[forecast["ds"] > df_monthly["ds"].max()].copy()
+        
+        if forecast_future.empty:
+            st.info("Belum ada data prediksi masa depan yang valid.")
+        else:
             avg_forecast = round(forecast_future["yhat"].mean(), 1)
-            max_month = forecast_future.loc[forecast_future["yhat"].idxmax(), "ds"].strftime("%B %Y")
+        
+            max_month = forecast_future.loc[
+                forecast_future["yhat"].idxmax(), "ds"
+            ].strftime("%B %Y")
             max_value = int(forecast_future["yhat"].max())
-
-            min_month = forecast_future.loc[forecast_future["yhat"].idxmin(), "ds"].strftime("%B %Y")
+        
+            min_month = forecast_future.loc[
+                forecast_future["yhat"].idxmin(), "ds"
+            ].strftime("%B %Y")
             min_value = int(forecast_future["yhat"].min())
-
+        
             st.subheader("📌 Insight Forecast")
-
+        
             c1, c2 = st.columns(2)
             c1.metric("Rata-rata Prediksi Konten / Bulan", avg_forecast)
             c2.metric("Perkiraan Puncak Produksi", max_value, max_month)
-
+        
             insight_df = pd.DataFrame({
                 "Insight": [
                     "Rata-rata Perkiraan Jumlah Konten",
@@ -405,7 +412,8 @@ with tab3:
                     f"{min_month} ({min_value} konten)"
                 ]
             })
-
+        
             st.table(insight_df)
+
     else:
         st.warning("Data tidak cukup untuk forecast (minimal 6 bulan)")
