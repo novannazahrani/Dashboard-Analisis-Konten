@@ -117,20 +117,37 @@ df = df.dropna(subset=["Tanggal"])
 df["Tahun"] = df["Tanggal"].dt.year
 df["Nama_Bulan"] = df["Tanggal"].dt.month_name()
 
-df["Konten Kanwil/Kanca"] = (
-    df["Konten Kanwil/Kanca"]
-    .astype(str)
-    .str.strip()
-    .str.replace(r"\s+", " ", regex=True)
-)
+df.columns = df.columns.str.replace(" ", "_").str.replace("/", "_")
 
-df["Konten Kanwil/Kanca"] = df["Konten Kanwil/Kanca"].replace({
-    "Kanpus": "Pusat",
-    "Jatim": "Kanwil",
-    "kanwil": "Kanwil"
+df['Konten_Kanwil_Kanca'] = df['Konten_Kanwil_Kanca'].astype(str).str.strip().str.replace(r'\s+', ' ', regex=True)
+df = df[df['Konten_Kanwil_Kanca'].str.strip() != '']
+
+df['Konten_Kanwil_Kanca'] = df['Konten_Kanwil_Kanca'].replace({
+    'Kanpus': 'Pusat',
+    'Jatim': 'Kanwil',
+    'kanwil': 'Kanwil',
+    'Kediri (Nganjuk)': 'Kediri',
+    'Surabaya (Konten collab Cak Bandi)': 'Surabaya',
+    "Probolinggo '": 'Probolinggo',
+    'Situbondo': 'Bondowoso',
+    'Mojokerto & Ponorogo': 'Mojokerto'
 })
 
-df.columns = df.columns.str.replace(" ", "_").str.replace("/", "_")
+df['Nama_Bulan'] = df['Nama_Bulan'].str.strip().str.capitalize()
+
+order_bulan = [
+    "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+]
+
+df['Nama_Bulan'] = pd.Categorical(df['Nama_Bulan'], categories=order_bulan, ordered=True)
+
+df_bulanan = (
+    df.groupby('Nama_Bulan')
+      .size()
+      .reset_index(name='Jumlah Konten')
+      .sort_values('Nama_Bulan')
+)
 
 total_konten = len(df)
 total_kanwil = df["Konten_Kanwil_Kanca"].nunique()
@@ -147,7 +164,6 @@ c3.metric("Rata-rata / Bulan", avg_konten)
 c4.metric("Bulan Terproduktif", top_bulan)
 
 st.divider()
-
 
 tab1, tab2, tab3 = st.tabs(["📌 Overview", "📊 Analisis Detail", "🔮 Forecast"])
 
@@ -360,6 +376,36 @@ with tab3:
 
         fig.update_layout(template=TEMPLATE)
         st.plotly_chart(fig, use_container_width=True, key="forecast")
+        
+        orecast_future = forecast[forecast["ds"] > df_monthly["ds"].max()]
 
+        avg_forecast = round(forecast_future["yhat"].mean(), 1)
+        max_month = forecast_future.loc[forecast_future["yhat"].idxmax(), "ds"].strftime("%B %Y")
+        max_value = int(forecast_future["yhat"].max())
+
+        min_month = forecast_future.loc[forecast_future["yhat"].idxmin(), "ds"].strftime("%B %Y")
+        min_value = int(forecast_future["yhat"].min())
+
+        st.subheader("📌 Insight Forecast")
+
+        c1, c2 = st.columns(2)
+        c1.metric("Rata-rata Prediksi Konten / Bulan", avg_forecast)
+        c2.metric("Perkiraan Puncak Produksi", max_value, max_month)
+
+        insight_df = pd.DataFrame({
+            "Insight": [
+                "Rata-rata Perkiraan Jumlah Konten",
+                "Perkiraan Bulan Paling Produktif",
+                "Perkiraan Bulan Paling Rendah"
+            ],
+            "Nilai": [
+                avg_forecast,
+                f"{max_month} ({max_value} konten)",
+                f"{min_month} ({min_value} konten)"
+            ]
+        })
+
+        st.table(insight_df)
+    
     else:
         st.warning("Data tidak cukup untuk forecast (minimal 6 bulan)")
