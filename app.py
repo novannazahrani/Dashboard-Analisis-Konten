@@ -1,3 +1,5 @@
+import os
+import json
 import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -5,7 +7,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from prophet import Prophet
-from google.oauth2.service_account import Credentials
 
 
 st.set_page_config(
@@ -26,14 +27,67 @@ if st.sidebar.button("Refresh Data"):
 TEMPLATE = "plotly_white"
 WARNA_BIRU = "#4C78A8"
 
+def get_service_account_credentials():
+    required_keys = [
+        "type",
+        "project_id",
+        "private_key_id",
+        "private_key",
+        "client_email",
+        "client_id",
+        "auth_uri",
+        "token_uri",
+        "auth_provider_x509_cert_url",
+        "client_x509_cert_url",
+    ]
+
+    def build_from(source_get):
+        return {
+            "type": source_get("GCP_SA_TYPE"),
+            "project_id": source_get("GCP_SA_PROJECT_ID"),
+            "private_key_id": source_get("GCP_SA_PRIVATE_KEY_ID"),
+            "private_key": source_get("GCP_SA_PRIVATE_KEY"),
+            "client_email": source_get("GCP_SA_CLIENT_EMAIL"),
+            "client_id": source_get("GCP_SA_CLIENT_ID"),
+            "auth_uri": source_get("GCP_SA_AUTH_URI"),
+            "token_uri": source_get("GCP_SA_TOKEN_URI"),
+            "auth_provider_x509_cert_url": source_get("GCP_SA_AUTH_PROVIDER_X509_CERT_URL"),
+            "client_x509_cert_url": source_get("GCP_SA_CLIENT_X509_CERT_URL"),
+            "universe_domain": source_get("GCP_SA_UNIVERSE_DOMAIN"),
+        }
+
+    env_map = build_from(os.getenv)
+    if all(env_map.get(k) for k in required_keys):
+        env_map["private_key"] = env_map["private_key"].replace("\\n", "\n")
+        return env_map
+
+    def secrets_get(key):
+        try:
+            return st.secrets[key]
+        except Exception:
+            return None
+
+    secrets_flat = build_from(secrets_get)
+    if all(secrets_flat.get(k) for k in required_keys):
+        secrets_flat["private_key"] = secrets_flat["private_key"].replace("\\n", "\n")
+        return secrets_flat
+
+    st.error(
+        "Credential service account tidak ditemukan. "
+    )
+    st.stop()
+
 @st.cache_data(ttl=300)
 def load_data():
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
     ]
-    secret_info = st.secrets["gcp_service_account"]
-    creds = Credentials.from_service_account_info(secret_info, scopes=scope)
+
+    credentials = get_service_account_credentials()
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials, scopes=scope)
+
+    
     client = gspread.authorize(creds)
     sheet = client.open("Data Konten Awal").worksheet("Sheet1")
     data = sheet.get_all_values()
