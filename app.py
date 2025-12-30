@@ -377,35 +377,35 @@ with tab3:
         fig.update_layout(template=TEMPLATE)
         st.plotly_chart(fig, use_container_width=True, key="forecast")
         
-        orecast_future = forecast[forecast["ds"] > df_monthly["ds"].max()]
+        forecast_future = forecast[forecast["ds"] > df_monthly["ds"].max()]
+        if len(forecast_future) > 0:
 
-        avg_forecast = round(forecast_future["yhat"].mean(), 1)
-        max_month = forecast_future.loc[forecast_future["yhat"].idxmax(), "ds"].strftime("%B %Y")
-        max_value = int(forecast_future["yhat"].max())
+            avg_forecast = round(forecast_future["yhat"].mean(), 1)
+            max_month = forecast_future.loc[forecast_future["yhat"].idxmax(), "ds"].strftime("%B %Y")
+            max_value = int(forecast_future["yhat"].max())
 
-        min_month = forecast_future.loc[forecast_future["yhat"].idxmin(), "ds"].strftime("%B %Y")
-        min_value = int(forecast_future["yhat"].min())
+            min_month = forecast_future.loc[forecast_future["yhat"].idxmin(), "ds"].strftime("%B %Y")
+            min_value = int(forecast_future["yhat"].min())
 
-        st.subheader("📌 Insight Forecast")
+            st.subheader("📌 Insight Forecast")
 
-        c1, c2 = st.columns(2)
-        c1.metric("Rata-rata Prediksi Konten / Bulan", avg_forecast)
-        c2.metric("Perkiraan Puncak Produksi", max_value, max_month)
+            c1, c2 = st.columns(2)
+            c1.metric("Rata-rata Prediksi Konten / Bulan", avg_forecast)
+            c2.metric("Perkiraan Puncak Produksi", max_value, max_month)
 
-        insight_df = pd.DataFrame({
-            "Insight": [
-                "Rata-rata Perkiraan Jumlah Konten",
-                "Perkiraan Bulan Paling Produktif",
-                "Perkiraan Bulan Paling Rendah"
-            ],
-            "Nilai": [
-                avg_forecast,
-                f"{max_month} ({max_value} konten)",
-                f"{min_month} ({min_value} konten)"
-            ]
-        })
+            insight_df = pd.DataFrame({
+                "Insight": [
+                    "Rata-rata Perkiraan Jumlah Konten",
+                    "Perkiraan Bulan Paling Produktif",
+                    "Perkiraan Bulan Paling Rendah"
+                ],
+                "Nilai": [
+                    avg_forecast,
+                    f"{max_month} ({max_value} konten)",
+                    f"{min_month} ({min_value} konten)"
+                ]
+            })
 
-        st.table(insight_df)
-    
+            st.table(insight_df)
     else:
         st.warning("Data tidak cukup untuk forecast (minimal 6 bulan)")
