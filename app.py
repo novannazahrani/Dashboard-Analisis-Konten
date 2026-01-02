@@ -14,7 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("Dashboard Analisis & Forecast Konten")
+st.title("Dashboard Analisis Konten Sosmed BULOG Kanwil Jatim")
 st.caption("Data otomatis dari Google Sheets")
 
 st.sidebar.divider()
